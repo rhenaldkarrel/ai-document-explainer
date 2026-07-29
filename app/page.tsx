@@ -1,22 +1,26 @@
 "use client";
 
 import { useState } from "react";
-import { AlertCircle, CheckCircle2, FileText } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { AlertCircle, FileText, Loader2 } from "lucide-react";
 import { UploadArea } from "@/components/upload-area";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Alert, AlertTitle } from "@/components/ui/alert";
 import { validateFile } from "@/lib/validate-file";
-import { SUPPORTED_FILE_EXTENSIONS } from "@/lib/constants";
+import { uploadDocumentToBlob } from "@/lib/upload-client";
+import { useDocumentSession } from "@/lib/document-session-context";
+import { ERROR_MESSAGES, SUPPORTED_FILE_EXTENSIONS } from "@/lib/constants";
+import type { AnalyzeApiResponse, ApiErrorResponse } from "@/lib/types";
 
 export default function Home() {
+  const router = useRouter();
+  const { setAnalysisResult } = useDocumentSession();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [isReady, setIsReady] = useState(false);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
 
   function handleFileSelected(file: File) {
-    setIsReady(false);
-
     const result = validateFile(file);
     if (!result.valid) {
       setSelectedFile(null);
@@ -31,12 +35,44 @@ export default function Home() {
   function handleClear() {
     setSelectedFile(null);
     setError(null);
-    setIsReady(false);
   }
 
-  function handleUpload() {
-    if (!selectedFile || error) return;
-    setIsReady(true);
+  async function handleUpload() {
+    if (!selectedFile || error || isAnalyzing) return;
+
+    setIsAnalyzing(true);
+    setError(null);
+
+    try {
+      const blob = await uploadDocumentToBlob(selectedFile);
+
+      const response = await fetch("/api/analyze", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          blobUrl: blob.url,
+          mimeType: selectedFile.type,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorBody = (await response.json().catch(() => null)) as ApiErrorResponse | null;
+        setError(errorBody?.error ?? ERROR_MESSAGES.PROCESSING_ERROR);
+        return;
+      }
+
+      const data = (await response.json()) as AnalyzeApiResponse;
+      setAnalysisResult({
+        fileName: selectedFile.name,
+        analysis: data.analysis,
+        extractedText: data.extractedText,
+      });
+      router.push("/analysis");
+    } catch {
+      setError(ERROR_MESSAGES.NETWORK_ERROR);
+    } finally {
+      setIsAnalyzing(false);
+    }
   }
 
   return (
@@ -66,16 +102,6 @@ export default function Home() {
             </Alert>
           )}
 
-          {isReady && !error && selectedFile && (
-            <Alert>
-              <CheckCircle2 />
-              <AlertTitle>Ready to analyze &ldquo;{selectedFile.name}&rdquo;</AlertTitle>
-              <AlertDescription>
-                Document analysis will be wired up in the next phase.
-              </AlertDescription>
-            </Alert>
-          )}
-
           <div className="flex flex-wrap items-center justify-center gap-2">
             <span className="text-sm text-muted-foreground">Supported files:</span>
             {SUPPORTED_FILE_EXTENSIONS.map((extension) => (
@@ -88,10 +114,17 @@ export default function Home() {
           <Button
             className="w-full"
             size="lg"
-            disabled={!selectedFile || !!error}
+            disabled={!selectedFile || !!error || isAnalyzing}
             onClick={handleUpload}
           >
-            Analyze Document
+            {isAnalyzing ? (
+              <>
+                <Loader2 className="animate-spin" aria-hidden />
+                Analyzing document...
+              </>
+            ) : (
+              "Analyze Document"
+            )}
           </Button>
         </div>
       </main>

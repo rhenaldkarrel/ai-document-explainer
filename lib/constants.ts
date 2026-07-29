@@ -10,7 +10,13 @@ export const SUPPORTED_MIME_TYPES: SupportedMimeType[] = [
 
 export const SUPPORTED_FILE_EXTENSIONS = [".pdf", ".png", ".jpg", ".jpeg"];
 
-export const GEMINI_MODEL_ID = "gemini-2.5-flash";
+/**
+ * "gemini-2.5-flash" (the PRD's literal spec) returns 404 "no longer available
+ * to new users" on newly issued API keys — confirmed live against the API, not
+ * assumed. "gemini-flash-latest" is Google's rolling alias to their current
+ * recommended fast model, which avoids re-breaking on the next deprecation wave.
+ */
+export const GEMINI_MODEL_ID = "gemini-flash-latest";
 
 /** The 5 exact error strings mandated by the PRD's "Error States" section. */
 export const ERROR_MESSAGES = {
