@@ -7,9 +7,9 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-sans);
-  --font-mono: var(--font-geist-mono);
-  --font-heading: var(--font-sans);
+  --font-sans: var(--font-body);
+  --font-mono: var(--font-data);
+  --font-heading: var(--font-display);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -39,6 +39,7 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
+  --color-highlight: var(--highlight);
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
@@ -48,73 +49,81 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
+/*
+ * Palette concept: paper, ink, and highlighter — the product's job is
+ * turning dense source material into clearly marked-up signal, so both
+ * themes share the same "page + amber highlighter" logic. Light is paper
+ * by daylight; dark is the same page read by lamp-light at night.
+ */
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --background: oklch(0.975 0.008 85);
+  --foreground: oklch(0.24 0.02 65);
+  --card: oklch(0.99 0.006 85);
+  --card-foreground: oklch(0.24 0.02 65);
+  --popover: oklch(0.99 0.006 85);
+  --popover-foreground: oklch(0.24 0.02 65);
+  --primary: oklch(0.6 0.16 62);
+  --primary-foreground: oklch(0.99 0.01 85);
+  --secondary: oklch(0.93 0.012 80);
+  --secondary-foreground: oklch(0.24 0.02 65);
+  --muted: oklch(0.94 0.01 82);
+  --muted-foreground: oklch(0.47 0.025 65);
+  --accent: oklch(0.91 0.03 70);
+  --accent-foreground: oklch(0.24 0.02 65);
+  --destructive: oklch(0.55 0.19 25);
+  --border: oklch(0.87 0.014 78);
+  --input: oklch(0.87 0.014 78);
+  --ring: oklch(0.6 0.16 62 / 45%);
+  --highlight: oklch(0.85 0.15 90 / 55%);
+  --chart-1: oklch(0.6 0.16 62);
+  --chart-2: oklch(0.55 0.1 200);
+  --chart-3: oklch(0.5 0.02 65);
+  --chart-4: oklch(0.7 0.12 62);
+  --chart-5: oklch(0.4 0.02 65);
+  --radius: 0.5rem;
+  --sidebar: oklch(0.96 0.01 82);
+  --sidebar-foreground: oklch(0.24 0.02 65);
+  --sidebar-primary: oklch(0.6 0.16 62);
+  --sidebar-primary-foreground: oklch(0.99 0.01 85);
+  --sidebar-accent: oklch(0.91 0.03 70);
+  --sidebar-accent-foreground: oklch(0.24 0.02 65);
+  --sidebar-border: oklch(0.87 0.014 78);
+  --sidebar-ring: oklch(0.6 0.16 62 / 45%);
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
+  --background: oklch(0.17 0.014 262);
+  --foreground: oklch(0.93 0.012 85);
+  --card: oklch(0.215 0.016 262);
+  --card-foreground: oklch(0.93 0.012 85);
+  --popover: oklch(0.215 0.016 262);
+  --popover-foreground: oklch(0.93 0.012 85);
+  --primary: oklch(0.8 0.15 78);
+  --primary-foreground: oklch(0.2 0.03 70);
+  --secondary: oklch(0.27 0.016 262);
+  --secondary-foreground: oklch(0.93 0.012 85);
+  --muted: oklch(0.24 0.015 262);
+  --muted-foreground: oklch(0.68 0.02 85);
+  --accent: oklch(0.3 0.03 78);
+  --accent-foreground: oklch(0.93 0.012 85);
+  --destructive: oklch(0.65 0.19 25);
   --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --input: oklch(1 0 0 / 12%);
+  --ring: oklch(0.8 0.15 78 / 45%);
+  --highlight: oklch(0.8 0.15 78 / 35%);
+  --chart-1: oklch(0.8 0.15 78);
+  --chart-2: oklch(0.65 0.1 200);
+  --chart-3: oklch(0.75 0.02 85);
+  --chart-4: oklch(0.6 0.13 78);
+  --chart-5: oklch(0.5 0.02 85);
+  --sidebar: oklch(0.2 0.015 262);
+  --sidebar-foreground: oklch(0.93 0.012 85);
+  --sidebar-primary: oklch(0.8 0.15 78);
+  --sidebar-primary-foreground: oklch(0.2 0.03 70);
+  --sidebar-accent: oklch(0.3 0.03 78);
+  --sidebar-accent-foreground: oklch(0.93 0.012 85);
   --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --sidebar-ring: oklch(0.8 0.15 78 / 45%);
 }
 
 @layer base {
@@ -126,5 +135,50 @@
   }
   html {
     @apply font-sans;
+  }
+}
+
+/*
+ * Signature moment: an amber "highlighter" sweep behind newly-revealed
+ * analysis text, echoing what the AI just did to the source document.
+ * Respects prefers-reduced-motion by simply not animating.
+ */
+@keyframes highlight-sweep {
+  0% {
+    background-size: 0% 100%;
+  }
+  60% {
+    background-size: 100% 100%;
+  }
+  100% {
+    background-size: 100% 100%;
+  }
+}
+
+@keyframes highlight-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(0.25rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.highlight-reveal {
+  background-image: linear-gradient(var(--highlight), var(--highlight));
+  background-repeat: no-repeat;
+  background-position: 0 88%;
+  background-size: 0% 35%;
+  animation:
+    highlight-fade-in 0.4s ease-out both,
+    highlight-sweep 0.7s 0.15s ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .highlight-reveal {
+    animation: none;
+    background-size: 100% 35%;
   }
 }
