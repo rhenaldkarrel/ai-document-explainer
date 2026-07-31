@@ -1,8 +1,7 @@
 import { del, get } from "@vercel/blob";
-import { after } from "next/server";
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import { ERROR_MESSAGES, MAX_FILE_SIZE_BYTES, SUPPORTED_MIME_TYPES } from "@/lib/constants";
-import { EmptyAnalysisError, analyzeDocument } from "@/lib/gemini";
+import { EmptyGeminiResponseError, analyzeDocument } from "@/lib/gemini";
 import type { AnalyzeApiResponse, ApiErrorResponse } from "@/lib/types";
 
 export const maxDuration = 30;
@@ -30,10 +29,9 @@ export async function POST(request: Request): Promise<NextResponse> {
     return errorResponse(ERROR_MESSAGES.PROCESSING_ERROR, 400);
   }
 
-  if (!(SUPPORTED_MIME_TYPES as string[]).includes(mimeType)) {
-    return errorResponse(ERROR_MESSAGES.UNSUPPORTED_FILE_TYPE, 400);
-  }
-
+  // The client already uploaded the blob by this point, so every return path from
+  // here on must clean it up — including validation failures below, not just the
+  // paths inside the try block.
   const token = process.env.BLOB_READ_WRITE_TOKEN;
   const scheduleCleanup = () =>
     after(async () => {
@@ -45,6 +43,11 @@ export async function POST(request: Request): Promise<NextResponse> {
         console.error("[analyze] cleanup: failed to delete blob", blobUrl, cleanupError);
       }
     });
+
+  if (!(SUPPORTED_MIME_TYPES as string[]).includes(mimeType)) {
+    scheduleCleanup();
+    return errorResponse(ERROR_MESSAGES.UNSUPPORTED_FILE_TYPE, 400);
+  }
 
   try {
     const blob = await get(blobUrl, { access: "private", token });
@@ -67,7 +70,7 @@ export async function POST(request: Request): Promise<NextResponse> {
   } catch (error) {
     scheduleCleanup();
 
-    if (error instanceof EmptyAnalysisError) {
+    if (error instanceof EmptyGeminiResponseError) {
       return errorResponse(ERROR_MESSAGES.EMPTY_AI_RESPONSE, 502);
     }
 

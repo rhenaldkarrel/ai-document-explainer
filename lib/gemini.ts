@@ -1,6 +1,6 @@
 import { GoogleGenAI, Type, createPartFromBase64 } from '@google/genai';
 import { GEMINI_MODEL_ID, UI_STRINGS } from '@/lib/constants';
-import type { DocumentAnalysis } from '@/lib/types';
+import type { ChatMessage, DocumentAnalysis } from '@/lib/types';
 
 let client: GoogleGenAI | null = null;
 
@@ -58,11 +58,11 @@ Do not speculate or add information that is not present in the document.`;
 
 export const CHAT_SYSTEM_INSTRUCTION = `You are answering questions about a specific document on the user's behalf. You are given the document's full text and the prior conversation. Answer the user's question using only information contained in the document text. Do not speculate or use outside knowledge. If the answer cannot be found in the document, respond with exactly: "${UI_STRINGS.ANSWER_NOT_FOUND}"`;
 
-/** Thrown when Gemini returns an empty or unparseable analysis response. */
-export class EmptyAnalysisError extends Error {
+/** Thrown when Gemini returns an empty or unparseable response. */
+export class EmptyGeminiResponseError extends Error {
   constructor() {
-    super('Gemini returned an empty or unparseable analysis response.');
-    this.name = 'EmptyAnalysisError';
+    super('Gemini returned an empty or unparseable response.');
+    this.name = 'EmptyGeminiResponseError';
   }
 }
 
@@ -85,16 +85,47 @@ export async function analyzeDocument(
 
   const text = response.text;
   if (!text) {
-    throw new EmptyAnalysisError();
+    throw new EmptyGeminiResponseError();
   }
 
   let parsed: DocumentAnalysis & { extractedText: string };
   try {
     parsed = JSON.parse(text);
   } catch {
-    throw new EmptyAnalysisError();
+    throw new EmptyGeminiResponseError();
   }
 
   const { extractedText, ...analysis } = parsed;
   return { analysis, extractedText };
+}
+
+export async function askDocumentQuestion(
+  extractedText: string,
+  history: ChatMessage[],
+  question: string,
+): Promise<string> {
+  const ai = getGeminiClient();
+
+  const systemInstruction = `${CHAT_SYSTEM_INSTRUCTION}\n\nDocument content:\n"""\n${extractedText}\n"""`;
+
+  const contents = [
+    ...history.map((message) => ({
+      role: message.role,
+      parts: [{ text: message.content }],
+    })),
+    { role: 'user', parts: [{ text: question }] },
+  ];
+
+  const response = await ai.models.generateContent({
+    model: GEMINI_MODEL_ID,
+    contents,
+    config: { systemInstruction },
+  });
+
+  const text = response.text;
+  if (!text) {
+    throw new EmptyGeminiResponseError();
+  }
+
+  return text;
 }

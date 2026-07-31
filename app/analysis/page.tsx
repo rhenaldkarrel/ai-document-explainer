@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { FileText } from "lucide-react";
+import { ChatPanel } from "@/components/chat-panel";
 import { buttonVariants } from "@/components/ui/button";
 import { useDocumentSession } from "@/lib/document-session-context";
 import { UI_STRINGS } from "@/lib/constants";
@@ -59,6 +60,8 @@ export default function AnalysisPage() {
           <p className="text-muted-foreground">{UI_STRINGS.NO_ACTION_ITEMS}</p>
         )}
       </section>
+
+      <ChatPanel />
     </div>
   );
 }
