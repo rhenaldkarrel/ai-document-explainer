@@ -4,6 +4,7 @@ import { useState } from "react";
 import { AlertCircle } from "lucide-react";
 import { ChatInput } from "@/components/chat-input";
 import { ChatMessageList } from "@/components/chat-message-list";
+import { SuggestedQuestions } from "@/components/suggested-questions";
 import { Alert, AlertTitle } from "@/components/ui/alert";
 import { useDocumentSession } from "@/lib/document-session-context";
 import { postJson } from "@/lib/fetch-with-error-mapping";
@@ -12,7 +13,7 @@ import { ERROR_MESSAGES } from "@/lib/constants";
 import type { ChatApiResponse } from "@/lib/types";
 
 export function ChatPanel() {
-  const { chatHistory, extractedText, addChatMessage } = useDocumentSession();
+  const { chatHistory, extractedText, suggestedQuestions, addChatMessage } = useDocumentSession();
   const { tier, temperature } = useSettings();
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -48,6 +49,14 @@ export function ChatPanel() {
       </h2>
 
       <ChatMessageList messages={chatHistory} isSending={isSending} />
+
+      {chatHistory.length === 0 && (
+        <SuggestedQuestions
+          questions={suggestedQuestions}
+          onSelect={handleSend}
+          disabled={isSending}
+        />
+      )}
 
       {error && (
         <Alert variant="destructive">

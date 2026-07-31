@@ -74,10 +74,18 @@ export async function POST(request: Request): Promise<NextResponse> {
     }
 
     const base64Data = Buffer.from(arrayBuffer).toString("base64");
-    const { analysis, extractedText } = await analyzeDocument(base64Data, mimeType, settings);
+    const { analysis, extractedText, suggestedQuestions } = await analyzeDocument(
+      base64Data,
+      mimeType,
+      settings,
+    );
 
     scheduleCleanup();
-    return NextResponse.json({ analysis, extractedText } satisfies AnalyzeApiResponse);
+    return NextResponse.json({
+      analysis,
+      extractedText,
+      suggestedQuestions,
+    } satisfies AnalyzeApiResponse);
   } catch (error) {
     scheduleCleanup();
 

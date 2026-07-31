@@ -21,6 +21,7 @@ export interface DocumentAnalysis {
 export interface AnalyzeApiResponse {
   analysis: DocumentAnalysis;
   extractedText: string;
+  suggestedQuestions: string[];
 }
 
 export type ChatRole = "user" | "model";

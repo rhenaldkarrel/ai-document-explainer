@@ -69,6 +69,7 @@ export default function Home() {
         fileName: selectedFile.name,
         analysis: data.analysis,
         extractedText: data.extractedText,
+        suggestedQuestions: data.suggestedQuestions,
       });
       router.push("/analysis");
     } catch (err) {

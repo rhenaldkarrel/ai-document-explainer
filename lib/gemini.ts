@@ -45,8 +45,14 @@ export const ANALYSIS_RESPONSE_SCHEMA = {
       description:
         "A faithful full-text transcript of the document's content, used to answer follow-up questions later.",
     },
+    suggestedQuestions: {
+      type: Type.ARRAY,
+      items: { type: Type.STRING },
+      description:
+        '3 to 4 short, specific questions a reader would plausibly ask about this document, answerable from its content.',
+    },
   },
-  required: ['summary', 'keyPoints', 'actionItems', 'extractedText'],
+  required: ['summary', 'keyPoints', 'actionItems', 'extractedText', 'suggestedQuestions'],
 };
 
 export const ANALYSIS_SYSTEM_INSTRUCTION = `You are a document analysis assistant. Given the contents of an uploaded document, produce a structured analysis:
@@ -54,6 +60,7 @@ export const ANALYSIS_SYSTEM_INSTRUCTION = `You are a document analysis assistan
 - keyPoints: 5 to 10 important bullet points from the document.
 - actionItems: deadlines, required actions, obligations, or tasks found in the document. Return an empty array if there are none — do not invent any.
 - extractedText: a faithful full-text transcript of the document's content, preserving as much structure as reasonably possible.
+- suggestedQuestions: 3 to 4 short, specific questions a reader would plausibly ask about this document, each answerable from its content.
 Do not speculate or add information that is not present in the document.`;
 
 export const CHAT_SYSTEM_INSTRUCTION = `You are answering questions about a specific document on the user's behalf. You are given the document's full text and the prior conversation. Answer the user's question using only information contained in the document text. Do not speculate or use outside knowledge. If the answer cannot be found in the document, respond with exactly: "${UI_STRINGS.ANSWER_NOT_FOUND}"`;
@@ -79,7 +86,7 @@ export async function analyzeDocument(
   base64Data: string,
   mimeType: string,
   settings: GenerationSettings,
-): Promise<{ analysis: DocumentAnalysis; extractedText: string }> {
+): Promise<{ analysis: DocumentAnalysis; extractedText: string; suggestedQuestions: string[] }> {
   const ai = getGeminiClient();
   const filePart = createPartFromBase64(base64Data, mimeType);
 
@@ -99,15 +106,15 @@ export async function analyzeDocument(
     throw new EmptyGeminiResponseError();
   }
 
-  let parsed: DocumentAnalysis & { extractedText: string };
+  let parsed: DocumentAnalysis & { extractedText: string; suggestedQuestions: string[] };
   try {
     parsed = JSON.parse(text);
   } catch {
     throw new EmptyGeminiResponseError();
   }
 
-  const { extractedText, ...analysis } = parsed;
-  return { analysis, extractedText };
+  const { extractedText, suggestedQuestions, ...analysis } = parsed;
+  return { analysis, extractedText, suggestedQuestions };
 }
 
 export async function askDocumentQuestion(

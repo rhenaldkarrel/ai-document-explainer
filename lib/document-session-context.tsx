@@ -8,6 +8,7 @@ interface DocumentSessionState {
   fileName: string | null;
   analysis: DocumentAnalysis | null;
   extractedText: string | null;
+  suggestedQuestions: string[];
   chatHistory: ChatMessage[];
 }
 
@@ -15,6 +16,7 @@ interface SetAnalysisResultInput {
   fileName: string;
   analysis: DocumentAnalysis;
   extractedText: string;
+  suggestedQuestions: string[];
 }
 
 interface DocumentSessionContextValue extends DocumentSessionState {
@@ -27,6 +29,7 @@ const initialState: DocumentSessionState = {
   fileName: null,
   analysis: null,
   extractedText: null,
+  suggestedQuestions: [],
   chatHistory: [],
 };
 
@@ -40,6 +43,7 @@ export function DocumentSessionProvider({ children }: { children: ReactNode }) {
       fileName: input.fileName,
       analysis: input.analysis,
       extractedText: input.extractedText,
+      suggestedQuestions: input.suggestedQuestions,
       chatHistory: [],
     });
   }, []);
