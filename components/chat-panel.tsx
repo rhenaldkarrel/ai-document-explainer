@@ -6,8 +6,9 @@ import { ChatInput } from "@/components/chat-input";
 import { ChatMessageList } from "@/components/chat-message-list";
 import { Alert, AlertTitle } from "@/components/ui/alert";
 import { useDocumentSession } from "@/lib/document-session-context";
+import { postJson } from "@/lib/fetch-with-error-mapping";
 import { ERROR_MESSAGES } from "@/lib/constants";
-import type { ApiErrorResponse, ChatApiResponse } from "@/lib/types";
+import type { ChatApiResponse } from "@/lib/types";
 
 export function ChatPanel() {
   const { chatHistory, extractedText, addChatMessage } = useDocumentSession();
@@ -23,26 +24,14 @@ export function ChatPanel() {
     setIsSending(true);
 
     try {
-      const response = await fetch("/api/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          extractedText,
-          history: historyBeforeQuestion,
-          question,
-        }),
+      const data = await postJson<ChatApiResponse>("/api/chat", {
+        extractedText,
+        history: historyBeforeQuestion,
+        question,
       });
-
-      if (!response.ok) {
-        const errorBody = (await response.json().catch(() => null)) as ApiErrorResponse | null;
-        setError(errorBody?.error ?? ERROR_MESSAGES.PROCESSING_ERROR);
-        return;
-      }
-
-      const data = (await response.json()) as ChatApiResponse;
       addChatMessage({ role: "model", content: data.answer });
-    } catch {
-      setError(ERROR_MESSAGES.NETWORK_ERROR);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : ERROR_MESSAGES.PROCESSING_ERROR);
     } finally {
       setIsSending(false);
     }

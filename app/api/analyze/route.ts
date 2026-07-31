@@ -57,6 +57,11 @@ export async function POST(request: Request): Promise<NextResponse> {
 
     const arrayBuffer = await new Response(blob.stream).arrayBuffer();
 
+    if (arrayBuffer.byteLength === 0) {
+      scheduleCleanup();
+      return errorResponse(ERROR_MESSAGES.PROCESSING_ERROR, 400);
+    }
+
     if (arrayBuffer.byteLength > MAX_FILE_SIZE_BYTES) {
       scheduleCleanup();
       return errorResponse(ERROR_MESSAGES.FILE_TOO_LARGE, 400);

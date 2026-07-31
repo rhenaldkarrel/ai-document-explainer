@@ -9,14 +9,16 @@ import { Badge } from "@/components/ui/badge";
 import { Alert, AlertTitle } from "@/components/ui/alert";
 import { validateFile } from "@/lib/validate-file";
 import { uploadDocumentToBlob } from "@/lib/upload-client";
+import { postJson } from "@/lib/fetch-with-error-mapping";
 import { useDocumentSession } from "@/lib/document-session-context";
 import { ERROR_MESSAGES, SUPPORTED_FILE_EXTENSIONS } from "@/lib/constants";
-import type { AnalyzeApiResponse, ApiErrorResponse } from "@/lib/types";
+import type { AnalyzeApiResponse, SupportedMimeType } from "@/lib/types";
 
 export default function Home() {
   const router = useRouter();
   const { setAnalysisResult } = useDocumentSession();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [mimeType, setMimeType] = useState<SupportedMimeType | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 
@@ -24,52 +26,46 @@ export default function Home() {
     const result = validateFile(file);
     if (!result.valid) {
       setSelectedFile(null);
+      setMimeType(null);
       setError(result.error);
       return;
     }
 
     setSelectedFile(file);
+    setMimeType(result.mimeType);
     setError(null);
   }
 
   function handleClear() {
     setSelectedFile(null);
+    setMimeType(null);
     setError(null);
   }
 
   async function handleUpload() {
-    if (!selectedFile || error || isAnalyzing) return;
+    if (!selectedFile || !mimeType || error || isAnalyzing) return;
 
     setIsAnalyzing(true);
     setError(null);
 
     try {
-      const blob = await uploadDocumentToBlob(selectedFile);
-
-      const response = await fetch("/api/analyze", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          blobUrl: blob.url,
-          mimeType: selectedFile.type,
-        }),
-      });
-
-      if (!response.ok) {
-        const errorBody = (await response.json().catch(() => null)) as ApiErrorResponse | null;
-        setError(errorBody?.error ?? ERROR_MESSAGES.PROCESSING_ERROR);
-        return;
+      let blobUrl: string;
+      try {
+        blobUrl = (await uploadDocumentToBlob(selectedFile)).url;
+      } catch {
+        throw new Error(ERROR_MESSAGES.NETWORK_ERROR);
       }
 
-      const data = (await response.json()) as AnalyzeApiResponse;
+      const data = await postJson<AnalyzeApiResponse>("/api/analyze", { blobUrl, mimeType });
+
       setAnalysisResult({
         fileName: selectedFile.name,
         analysis: data.analysis,
         extractedText: data.extractedText,
       });
       router.push("/analysis");
-    } catch {
-      setError(ERROR_MESSAGES.NETWORK_ERROR);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : ERROR_MESSAGES.PROCESSING_ERROR);
     } finally {
       setIsAnalyzing(false);
     }
