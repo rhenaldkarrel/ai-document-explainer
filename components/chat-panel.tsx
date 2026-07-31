@@ -7,11 +7,13 @@ import { ChatMessageList } from "@/components/chat-message-list";
 import { Alert, AlertTitle } from "@/components/ui/alert";
 import { useDocumentSession } from "@/lib/document-session-context";
 import { postJson } from "@/lib/fetch-with-error-mapping";
+import { useSettings } from "@/lib/settings-context";
 import { ERROR_MESSAGES } from "@/lib/constants";
 import type { ChatApiResponse } from "@/lib/types";
 
 export function ChatPanel() {
   const { chatHistory, extractedText, addChatMessage } = useDocumentSession();
+  const { tier, temperature } = useSettings();
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -28,6 +30,8 @@ export function ChatPanel() {
         extractedText,
         history: historyBeforeQuestion,
         question,
+        tier,
+        temperature,
       });
       addChatMessage({ role: "model", content: data.answer });
     } catch (err) {

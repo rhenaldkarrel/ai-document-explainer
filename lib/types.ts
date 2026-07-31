@@ -1,5 +1,12 @@
 export type SupportedMimeType = "application/pdf" | "image/png" | "image/jpeg";
 
+export type ModelTier = "flash-lite" | "flash" | "pro";
+
+export interface GenerationSettings {
+  tier: ModelTier;
+  temperature: number;
+}
+
 export interface DocumentAnalysis {
   summary: string;
   keyPoints: string[];

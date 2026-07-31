@@ -11,12 +11,14 @@ import { validateFile } from "@/lib/validate-file";
 import { uploadDocumentToBlob } from "@/lib/upload-client";
 import { postJson } from "@/lib/fetch-with-error-mapping";
 import { useDocumentSession } from "@/lib/document-session-context";
+import { useSettings } from "@/lib/settings-context";
 import { ERROR_MESSAGES, SUPPORTED_FILE_EXTENSIONS } from "@/lib/constants";
 import type { AnalyzeApiResponse, SupportedMimeType } from "@/lib/types";
 
 export default function Home() {
   const router = useRouter();
   const { setAnalysisResult } = useDocumentSession();
+  const { tier, temperature } = useSettings();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [mimeType, setMimeType] = useState<SupportedMimeType | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -56,7 +58,12 @@ export default function Home() {
         throw new Error(ERROR_MESSAGES.NETWORK_ERROR);
       }
 
-      const data = await postJson<AnalyzeApiResponse>("/api/analyze", { blobUrl, mimeType });
+      const data = await postJson<AnalyzeApiResponse>("/api/analyze", {
+        blobUrl,
+        mimeType,
+        tier,
+        temperature,
+      });
 
       setAnalysisResult({
         fileName: selectedFile.name,

@@ -1,6 +1,6 @@
 import { GoogleGenAI, Type, createPartFromBase64 } from '@google/genai';
-import { GEMINI_MODEL_ID, UI_STRINGS } from '@/lib/constants';
-import type { ChatMessage, DocumentAnalysis } from '@/lib/types';
+import { MODEL_TIERS, UI_STRINGS } from '@/lib/constants';
+import type { ChatMessage, DocumentAnalysis, GenerationSettings } from '@/lib/types';
 
 let client: GoogleGenAI | null = null;
 
@@ -66,20 +66,31 @@ export class EmptyGeminiResponseError extends Error {
   }
 }
 
+/** Resolves a `GenerationSettings.tier` to the actual Gemini model ID it maps to. */
+function resolveModelId(tier: GenerationSettings['tier']): string {
+  const option = MODEL_TIERS.find((tierOption) => tierOption.id === tier);
+  if (!option) {
+    throw new Error(`Unknown model tier: ${tier}`);
+  }
+  return option.modelId;
+}
+
 export async function analyzeDocument(
   base64Data: string,
   mimeType: string,
+  settings: GenerationSettings,
 ): Promise<{ analysis: DocumentAnalysis; extractedText: string }> {
   const ai = getGeminiClient();
   const filePart = createPartFromBase64(base64Data, mimeType);
 
   const response = await ai.models.generateContent({
-    model: GEMINI_MODEL_ID,
+    model: resolveModelId(settings.tier),
     contents: [filePart, { text: 'Analyze the attached document.' }],
     config: {
       systemInstruction: ANALYSIS_SYSTEM_INSTRUCTION,
       responseMimeType: 'application/json',
       responseSchema: ANALYSIS_RESPONSE_SCHEMA,
+      temperature: settings.temperature,
     },
   });
 
@@ -103,6 +114,7 @@ export async function askDocumentQuestion(
   extractedText: string,
   history: ChatMessage[],
   question: string,
+  settings: GenerationSettings,
 ): Promise<string> {
   const ai = getGeminiClient();
 
@@ -117,9 +129,9 @@ export async function askDocumentQuestion(
   ];
 
   const response = await ai.models.generateContent({
-    model: GEMINI_MODEL_ID,
+    model: resolveModelId(settings.tier),
     contents,
-    config: { systemInstruction },
+    config: { systemInstruction, temperature: settings.temperature },
   });
 
   const text = response.text;
