@@ -88,7 +88,16 @@ export function SettingsDialog() {
               max={MAX_TEMPERATURE}
               step={TEMPERATURE_STEP}
               value={[temperature]}
-              onValueChange={(value) => setTemperature((value as number[])[0])}
+              onValueChange={(value) => {
+                // A single-thumb slider reports a plain number here at
+                // runtime even though `value` above is passed as an array
+                // (needed so the wrapper renders exactly one thumb) — handle
+                // both shapes rather than assuming one.
+                const next = Array.isArray(value) ? value[0] : value;
+                if (typeof next === "number" && Number.isFinite(next)) {
+                  setTemperature(next);
+                }
+              }}
             />
             <p className="text-xs text-muted-foreground">
               Lower is more focused and consistent; higher is more creative and varied.
