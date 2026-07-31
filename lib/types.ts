@@ -48,15 +48,14 @@ export interface ChatMessage {
   content: string;
 }
 
-export interface ChatApiRequest {
-  extractedText: string;
-  history: ChatMessage[];
-  question: string;
-}
-
-export interface ChatApiResponse {
-  answer: string;
-}
+/**
+ * POST /api/chat streams its response as newline-delimited JSON frames
+ * instead of a single JSON body, so a mid-answer failure can still be
+ * signaled after tokens have already been sent (a plain HTTP status can only
+ * be set before the body starts). The stream closing cleanly (no trailing
+ * "error" frame) signals success.
+ */
+export type ChatStreamFrame = { type: "text"; value: string } | { type: "error"; message: string };
 
 export interface ApiErrorResponse {
   error: string;

@@ -3,11 +3,14 @@ import { cn } from "@/lib/utils";
 
 interface ChatMessageListProps {
   messages: ChatMessage[];
-  isSending: boolean;
+  /** In-progress streamed reply text, or `null` when nothing is streaming. */
+  streamingMessage: string | null;
 }
 
-export function ChatMessageList({ messages, isSending }: ChatMessageListProps) {
-  if (messages.length === 0 && !isSending) {
+export function ChatMessageList({ messages, streamingMessage }: ChatMessageListProps) {
+  const isStreaming = streamingMessage !== null;
+
+  if (messages.length === 0 && !isStreaming) {
     return (
       <p className="text-sm text-muted-foreground">
         Ask a question about this document. Answers are based only on its content.
@@ -30,9 +33,9 @@ export function ChatMessageList({ messages, isSending }: ChatMessageListProps) {
           {message.content}
         </div>
       ))}
-      {isSending && (
-        <div className="self-start rounded-lg bg-muted px-3 py-2 text-sm text-muted-foreground">
-          Thinking...
+      {isStreaming && (
+        <div className="max-w-[85%] self-start rounded-lg bg-muted px-3 py-2 text-sm break-words text-foreground">
+          {streamingMessage || "Thinking..."}
         </div>
       )}
     </div>

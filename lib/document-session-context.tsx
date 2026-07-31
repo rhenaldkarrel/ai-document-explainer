@@ -10,6 +10,8 @@ interface DocumentSessionState {
   extractedText: string | null;
   suggestedQuestions: string[];
   chatHistory: ChatMessage[];
+  /** In-progress streamed model reply, not yet in `chatHistory`. `null` = no answer streaming right now. */
+  streamingMessage: string | null;
 }
 
 interface SetAnalysisResultInput {
@@ -22,6 +24,10 @@ interface SetAnalysisResultInput {
 interface DocumentSessionContextValue extends DocumentSessionState {
   setAnalysisResult: (input: SetAnalysisResultInput) => void;
   addChatMessage: (message: ChatMessage) => void;
+  startStreamingMessage: () => void;
+  appendToStreamingMessage: (delta: string) => void;
+  commitStreamingMessage: () => void;
+  discardStreamingMessage: () => void;
   reset: () => void;
 }
 
@@ -31,6 +37,7 @@ const initialState: DocumentSessionState = {
   extractedText: null,
   suggestedQuestions: [],
   chatHistory: [],
+  streamingMessage: null,
 };
 
 const DocumentSessionContext = createContext<DocumentSessionContextValue | null>(null);
@@ -45,6 +52,7 @@ export function DocumentSessionProvider({ children }: { children: ReactNode }) {
       extractedText: input.extractedText,
       suggestedQuestions: input.suggestedQuestions,
       chatHistory: [],
+      streamingMessage: null,
     });
   }, []);
 
@@ -55,11 +63,55 @@ export function DocumentSessionProvider({ children }: { children: ReactNode }) {
     }));
   }, []);
 
+  const startStreamingMessage = useCallback(() => {
+    setState((previous) => ({ ...previous, streamingMessage: "" }));
+  }, []);
+
+  const appendToStreamingMessage = useCallback((delta: string) => {
+    setState((previous) => ({
+      ...previous,
+      streamingMessage: (previous.streamingMessage ?? "") + delta,
+    }));
+  }, []);
+
+  const commitStreamingMessage = useCallback(() => {
+    setState((previous) => {
+      if (previous.streamingMessage === null) return previous;
+      return {
+        ...previous,
+        chatHistory: [...previous.chatHistory, { role: "model", content: previous.streamingMessage }],
+        streamingMessage: null,
+      };
+    });
+  }, []);
+
+  const discardStreamingMessage = useCallback(() => {
+    setState((previous) => ({ ...previous, streamingMessage: null }));
+  }, []);
+
   const reset = useCallback(() => setState(initialState), []);
 
   const value = useMemo<DocumentSessionContextValue>(
-    () => ({ ...state, setAnalysisResult, addChatMessage, reset }),
-    [state, setAnalysisResult, addChatMessage, reset]
+    () => ({
+      ...state,
+      setAnalysisResult,
+      addChatMessage,
+      startStreamingMessage,
+      appendToStreamingMessage,
+      commitStreamingMessage,
+      discardStreamingMessage,
+      reset,
+    }),
+    [
+      state,
+      setAnalysisResult,
+      addChatMessage,
+      startStreamingMessage,
+      appendToStreamingMessage,
+      commitStreamingMessage,
+      discardStreamingMessage,
+      reset,
+    ]
   );
 
   return (

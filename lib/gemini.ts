@@ -179,12 +179,19 @@ export async function analyzeExtractedText(
   return { analysis, suggestedQuestions };
 }
 
-export async function askDocumentQuestion(
+/**
+ * Yields the answer as it's generated. Throws `EmptyGeminiResponseError` if
+ * the stream ends without ever producing text — since that check happens
+ * before this generator's first `yield`, a caller's first `.next()` call
+ * rejects with it rather than silently completing, letting a route handler
+ * distinguish "failed before any output" from "failed partway through".
+ */
+export async function* streamDocumentAnswer(
   extractedText: string,
   history: ChatMessage[],
   question: string,
   settings: GenerationSettings,
-): Promise<string> {
+): AsyncGenerator<string> {
   const ai = getGeminiClient();
 
   const systemInstruction = `${CHAT_SYSTEM_INSTRUCTION}\n\nDocument content:\n"""\n${extractedText}\n"""`;
@@ -197,16 +204,21 @@ export async function askDocumentQuestion(
     { role: 'user', parts: [{ text: question }] },
   ];
 
-  const response = await ai.models.generateContent({
+  const stream = await ai.models.generateContentStream({
     model: resolveModelId(settings.tier),
     contents,
     config: { systemInstruction, temperature: settings.temperature },
   });
 
-  const text = response.text;
-  if (!text) {
-    throw new EmptyGeminiResponseError();
+  let receivedAny = false;
+  for await (const chunk of stream) {
+    if (chunk.text) {
+      receivedAny = true;
+      yield chunk.text;
+    }
   }
 
-  return text;
+  if (!receivedAny) {
+    throw new EmptyGeminiResponseError();
+  }
 }
