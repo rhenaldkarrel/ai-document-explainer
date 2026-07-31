@@ -10,6 +10,14 @@ const EXTENSION_TO_MIME_TYPE: Record<string, SupportedMimeType> = {
   ".png": "image/png",
   ".jpg": "image/jpeg",
   ".jpeg": "image/jpeg",
+  ".wav": "audio/wav",
+  ".mp3": "audio/mpeg",
+  ".aac": "audio/aac",
+  ".ogg": "audio/ogg",
+  ".flac": "audio/flac",
+  ".m4a": "audio/m4a",
+  ".docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  ".pptx": "application/vnd.openxmlformats-officedocument.presentationml.presentation",
 };
 
 function isSupportedMimeType(type: string): type is SupportedMimeType {

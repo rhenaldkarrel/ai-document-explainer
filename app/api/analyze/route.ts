@@ -1,10 +1,21 @@
 import { ApiError } from "@google/genai";
 import { del, get } from "@vercel/blob";
 import { NextResponse, after } from "next/server";
-import { ERROR_MESSAGES, MAX_FILE_SIZE_BYTES, SUPPORTED_MIME_TYPES } from "@/lib/constants";
-import { EmptyGeminiResponseError, analyzeDocument } from "@/lib/gemini";
+import {
+  ERROR_MESSAGES,
+  MAX_FILE_SIZE_BYTES,
+  SUPPORTED_MIME_TYPES,
+  isOfficeMimeType,
+} from "@/lib/constants";
+import { EmptyGeminiResponseError, analyzeDocument, analyzeExtractedText } from "@/lib/gemini";
+import { TextExtractionError, extractOfficeText } from "@/lib/office-text-extraction";
 import { resolveGenerationSettings } from "@/lib/resolve-generation-settings";
-import type { AnalyzeApiResponse, ApiErrorResponse } from "@/lib/types";
+import type {
+  AnalyzeApiResponse,
+  ApiErrorResponse,
+  DocumentAnalysis,
+  GenerationSettings,
+} from "@/lib/types";
 
 export const maxDuration = 30;
 
@@ -17,6 +28,41 @@ interface AnalyzeRequestBody {
 
 function errorResponse(message: string, status: number): NextResponse {
   return NextResponse.json({ error: message } satisfies ApiErrorResponse, { status });
+}
+
+async function runAnalysis(
+  mimeType: string,
+  arrayBuffer: ArrayBuffer,
+  settings: GenerationSettings,
+): Promise<{ analysis: DocumentAnalysis; extractedText: string; suggestedQuestions: string[] }> {
+  if (isOfficeMimeType(mimeType)) {
+    // Gemini can't read .docx/.pptx natively — extract text first, and use
+    // that extraction (not a Gemini-produced echo) as the response's
+    // extractedText.
+    const extractedText = await extractOfficeText(Buffer.from(arrayBuffer));
+    const { analysis, suggestedQuestions } = await analyzeExtractedText(extractedText, settings);
+    return { analysis, extractedText, suggestedQuestions };
+  }
+
+  const base64Data = Buffer.from(arrayBuffer).toString("base64");
+  return analyzeDocument(base64Data, mimeType, settings);
+}
+
+function mapAnalysisError(error: unknown): { message: string; status: number } {
+  if (error instanceof TextExtractionError) {
+    return { message: ERROR_MESSAGES.UNREADABLE_DOCUMENT, status: 400 };
+  }
+  if (error instanceof EmptyGeminiResponseError) {
+    return { message: ERROR_MESSAGES.EMPTY_AI_RESPONSE, status: 502 };
+  }
+  if (error instanceof ApiError && error.status === 404) {
+    return { message: ERROR_MESSAGES.MODEL_UNAVAILABLE, status: 502 };
+  }
+  if (error instanceof ApiError && error.status === 429) {
+    return { message: ERROR_MESSAGES.RATE_LIMITED, status: 429 };
+  }
+  console.error("Document analysis failed:", error);
+  return { message: ERROR_MESSAGES.PROCESSING_ERROR, status: 500 };
 }
 
 export async function POST(request: Request): Promise<NextResponse> {
@@ -73,10 +119,9 @@ export async function POST(request: Request): Promise<NextResponse> {
       return errorResponse(ERROR_MESSAGES.FILE_TOO_LARGE, 400);
     }
 
-    const base64Data = Buffer.from(arrayBuffer).toString("base64");
-    const { analysis, extractedText, suggestedQuestions } = await analyzeDocument(
-      base64Data,
+    const { analysis, extractedText, suggestedQuestions } = await runAnalysis(
       mimeType,
+      arrayBuffer,
       settings,
     );
 
@@ -88,20 +133,7 @@ export async function POST(request: Request): Promise<NextResponse> {
     } satisfies AnalyzeApiResponse);
   } catch (error) {
     scheduleCleanup();
-
-    if (error instanceof EmptyGeminiResponseError) {
-      return errorResponse(ERROR_MESSAGES.EMPTY_AI_RESPONSE, 502);
-    }
-
-    if (error instanceof ApiError && error.status === 404) {
-      return errorResponse(ERROR_MESSAGES.MODEL_UNAVAILABLE, 502);
-    }
-
-    if (error instanceof ApiError && error.status === 429) {
-      return errorResponse(ERROR_MESSAGES.RATE_LIMITED, 429);
-    }
-
-    console.error("Document analysis failed:", error);
-    return errorResponse(ERROR_MESSAGES.PROCESSING_ERROR, 500);
+    const { message, status } = mapAnalysisError(error);
+    return errorResponse(message, status);
   }
 }

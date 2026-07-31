@@ -1,4 +1,21 @@
-export type SupportedMimeType = "application/pdf" | "image/png" | "image/jpeg";
+/** Formats Gemini reads natively as multimodal input (no text-extraction step needed). */
+export type NativeMimeType =
+  | "application/pdf"
+  | "image/png"
+  | "image/jpeg"
+  | "audio/wav"
+  | "audio/mpeg"
+  | "audio/aac"
+  | "audio/ogg"
+  | "audio/flac"
+  | "audio/m4a";
+
+/** Formats Gemini can't read natively — text is extracted server-side first. */
+export type OfficeMimeType =
+  | "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+  | "application/vnd.openxmlformats-officedocument.presentationml.presentation";
+
+export type SupportedMimeType = NativeMimeType | OfficeMimeType;
 
 export type ModelTier = "flash-lite" | "flash" | "pro";
 

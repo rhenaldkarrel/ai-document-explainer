@@ -1,14 +1,49 @@
-import type { ModelTier, SupportedMimeType } from "@/lib/types";
+import type { ModelTier, NativeMimeType, OfficeMimeType, SupportedMimeType } from "@/lib/types";
 
 export const MAX_FILE_SIZE_BYTES = 20 * 1024 * 1024;
 
-export const SUPPORTED_MIME_TYPES: SupportedMimeType[] = [
+/** Passed straight to Gemini as multimodal input — see `NativeMimeType`. */
+export const NATIVE_MIME_TYPES: NativeMimeType[] = [
   "application/pdf",
   "image/png",
   "image/jpeg",
+  "audio/wav",
+  "audio/mpeg",
+  "audio/aac",
+  "audio/ogg",
+  "audio/flac",
+  "audio/m4a",
 ];
 
-export const SUPPORTED_FILE_EXTENSIONS = [".pdf", ".png", ".jpg", ".jpeg"];
+/** Text-extracted server-side before reaching Gemini — see `OfficeMimeType`. */
+export const OFFICE_MIME_TYPES: OfficeMimeType[] = [
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+];
+
+export const SUPPORTED_MIME_TYPES: SupportedMimeType[] = [
+  ...NATIVE_MIME_TYPES,
+  ...OFFICE_MIME_TYPES,
+];
+
+export function isOfficeMimeType(mimeType: string): mimeType is OfficeMimeType {
+  return (OFFICE_MIME_TYPES as string[]).includes(mimeType);
+}
+
+export const SUPPORTED_FILE_EXTENSIONS = [
+  ".pdf",
+  ".png",
+  ".jpg",
+  ".jpeg",
+  ".wav",
+  ".mp3",
+  ".aac",
+  ".ogg",
+  ".flac",
+  ".m4a",
+  ".docx",
+  ".pptx",
+];
 
 interface ModelTierOption {
   id: ModelTier;
@@ -62,6 +97,7 @@ export const ERROR_MESSAGES = {
   NETWORK_ERROR: "Please check your internet connection and try again.",
   MODEL_UNAVAILABLE: "The selected AI model is temporarily unavailable. Please choose a different model.",
   RATE_LIMITED: "The selected AI model has hit its usage limit. Please try again shortly or choose a different model.",
+  UNREADABLE_DOCUMENT: "This document could not be read. It may be corrupted or password-protected.",
 } as const;
 
 /** Other exact strings the PRD mandates outside the "Error States" section. */
