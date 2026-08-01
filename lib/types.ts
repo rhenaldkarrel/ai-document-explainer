@@ -59,4 +59,6 @@ export type ChatStreamFrame = { type: "text"; value: string } | { type: "error";
 
 export interface ApiErrorResponse {
   error: string;
+  /** POST /api/analyze only: true when the client can retry with the same already-uploaded blob instead of re-uploading. */
+  retryable?: boolean;
 }

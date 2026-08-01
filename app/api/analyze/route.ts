@@ -26,8 +26,8 @@ interface AnalyzeRequestBody {
   temperature?: number;
 }
 
-function errorResponse(message: string, status: number): NextResponse {
-  return NextResponse.json({ error: message } satisfies ApiErrorResponse, { status });
+function errorResponse(message: string, status: number, retryable = false): NextResponse {
+  return NextResponse.json({ error: message, retryable } satisfies ApiErrorResponse, { status });
 }
 
 async function runAnalysis(
@@ -48,21 +48,28 @@ async function runAnalysis(
   return analyzeDocument(base64Data, mimeType, settings);
 }
 
-function mapAnalysisError(error: unknown): { message: string; status: number } {
+interface AnalysisErrorInfo {
+  message: string;
+  status: number;
+  /** Whether the failure is transient (AI/network-side) rather than a permanent problem with the file itself. */
+  retryable: boolean;
+}
+
+function mapAnalysisError(error: unknown): AnalysisErrorInfo {
   if (error instanceof TextExtractionError) {
-    return { message: ERROR_MESSAGES.UNREADABLE_DOCUMENT, status: 400 };
+    return { message: ERROR_MESSAGES.UNREADABLE_DOCUMENT, status: 400, retryable: false };
   }
   if (error instanceof EmptyGeminiResponseError) {
-    return { message: ERROR_MESSAGES.EMPTY_AI_RESPONSE, status: 502 };
+    return { message: ERROR_MESSAGES.EMPTY_AI_RESPONSE, status: 502, retryable: true };
   }
   if (error instanceof ApiError && error.status === 404) {
-    return { message: ERROR_MESSAGES.MODEL_UNAVAILABLE, status: 502 };
+    return { message: ERROR_MESSAGES.MODEL_UNAVAILABLE, status: 502, retryable: true };
   }
   if (error instanceof ApiError && error.status === 429) {
-    return { message: ERROR_MESSAGES.RATE_LIMITED, status: 429 };
+    return { message: ERROR_MESSAGES.RATE_LIMITED, status: 429, retryable: true };
   }
   console.error("Document analysis failed:", error);
-  return { message: ERROR_MESSAGES.PROCESSING_ERROR, status: 500 };
+  return { message: ERROR_MESSAGES.PROCESSING_ERROR, status: 500, retryable: true };
 }
 
 export async function POST(request: Request): Promise<NextResponse> {
@@ -81,9 +88,12 @@ export async function POST(request: Request): Promise<NextResponse> {
 
   const settings = resolveGenerationSettings({ tier, temperature });
 
-  // The client already uploaded the blob by this point, so every return path from
-  // here on must clean it up — including validation failures below, not just the
-  // paths inside the try block.
+  // The client already uploaded the blob by this point. Every return path
+  // cleans it up except transient (retryable) failures in the catch block
+  // below, which deliberately leave it in place so a retry can reuse
+  // blobUrl instead of re-uploading. Retried-but-abandoned blobs currently
+  // have no TTL of their own — a scheduled cleanup job is a reasonable
+  // fast-follow if that turns out to matter.
   const token = process.env.BLOB_READ_WRITE_TOKEN;
   const scheduleCleanup = () =>
     after(async () => {
@@ -132,8 +142,13 @@ export async function POST(request: Request): Promise<NextResponse> {
       suggestedQuestions,
     } satisfies AnalyzeApiResponse);
   } catch (error) {
-    scheduleCleanup();
-    const { message, status } = mapAnalysisError(error);
-    return errorResponse(message, status);
+    const { message, status, retryable } = mapAnalysisError(error);
+    // Transient (AI-side) failures leave the blob intact so a retry can
+    // reuse blobUrl without re-uploading; permanent failures (e.g. a
+    // corrupt file) clean it up immediately since retrying can't help.
+    if (!retryable) {
+      scheduleCleanup();
+    }
+    return errorResponse(message, status, retryable);
   }
 }

@@ -140,29 +140,25 @@
 
 /*
  * Signature moment: an amber "highlighter" sweep behind newly-revealed
- * analysis text, echoing what the AI just did to the source document.
- * Respects prefers-reduced-motion by simply not animating.
+ * analysis text, echoing what the AI just did to the source document. A
+ * single keyframe (not two) so a per-item stagger only needs one
+ * animation-delay value. Respects prefers-reduced-motion by not animating.
  */
-@keyframes highlight-sweep {
+@keyframes highlight-reveal {
   0% {
-    background-size: 0% 100%;
-  }
-  60% {
-    background-size: 100% 100%;
-  }
-  100% {
-    background-size: 100% 100%;
-  }
-}
-
-@keyframes highlight-fade-in {
-  from {
     opacity: 0;
     transform: translateY(0.25rem);
+    background-size: 0% 100%;
   }
-  to {
+  35% {
     opacity: 1;
     transform: translateY(0);
+    background-size: 0% 100%;
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+    background-size: 100% 35%;
   }
 }
 
@@ -171,14 +167,14 @@
   background-repeat: no-repeat;
   background-position: 0 88%;
   background-size: 0% 35%;
-  animation:
-    highlight-fade-in 0.4s ease-out both,
-    highlight-sweep 0.7s 0.15s ease-out both;
+  opacity: 0;
+  animation: highlight-reveal 0.85s ease-out both;
 }
 
 @media (prefers-reduced-motion: reduce) {
   .highlight-reveal {
     animation: none;
+    opacity: 1;
     background-size: 100% 35%;
   }
 }

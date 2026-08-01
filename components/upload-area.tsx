@@ -3,6 +3,7 @@
 import { useId, useState } from "react";
 import { FileText, UploadCloud, X } from "lucide-react";
 import { SUPPORTED_FILE_EXTENSIONS } from "@/lib/constants";
+import { formatFileSize } from "@/lib/format-file-size";
 import { cn } from "@/lib/utils";
 
 interface UploadAreaProps {
@@ -11,8 +12,19 @@ interface UploadAreaProps {
   onClear: () => void;
 }
 
-function formatFileSize(bytes: number): string {
-  return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+function CornerMarks({ active }: { active: boolean }) {
+  const markClass = cn(
+    "absolute size-4 border-current transition-colors",
+    active ? "text-primary" : "text-border"
+  );
+  return (
+    <>
+      <span className={cn(markClass, "top-3 left-3 border-t-2 border-l-2")} aria-hidden />
+      <span className={cn(markClass, "top-3 right-3 border-t-2 border-r-2")} aria-hidden />
+      <span className={cn(markClass, "bottom-3 left-3 border-b-2 border-l-2")} aria-hidden />
+      <span className={cn(markClass, "right-3 bottom-3 border-r-2 border-b-2")} aria-hidden />
+    </>
+  );
 }
 
 export function UploadArea({ selectedFile, onFileSelected, onClear }: UploadAreaProps) {
@@ -37,21 +49,25 @@ export function UploadArea({ selectedFile, onFileSelected, onClear }: UploadArea
         handleFiles(event.dataTransfer.files);
       }}
       className={cn(
-        "relative flex flex-col items-center justify-center gap-3 rounded-lg border-2 border-dashed p-10 text-center transition-colors",
-        isDraggingOver ? "border-primary bg-primary/5" : "border-border"
+        "relative flex min-h-52 flex-col items-center justify-center gap-3 rounded-lg border p-10 text-center transition-colors",
+        isDraggingOver ? "border-primary/60 bg-primary/6" : "border-border bg-card/40"
       )}
     >
+      <CornerMarks active={isDraggingOver || Boolean(selectedFile)} />
+
       {selectedFile ? (
         <>
-          <FileText className="size-10 text-primary" aria-hidden />
+          <FileText className="size-9 text-primary" aria-hidden />
           <div>
             <p className="font-medium break-all">{selectedFile.name}</p>
-            <p className="text-sm text-muted-foreground">{formatFileSize(selectedFile.size)}</p>
+            <p className="font-mono text-xs text-muted-foreground">
+              {formatFileSize(selectedFile.size)}
+            </p>
           </div>
           <button
             type="button"
             onClick={onClear}
-            className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
+            className="inline-flex items-center gap-1 text-sm text-muted-foreground transition-colors hover:text-foreground"
           >
             <X className="size-4" aria-hidden />
             Remove
@@ -62,7 +78,13 @@ export function UploadArea({ selectedFile, onFileSelected, onClear }: UploadArea
           <label htmlFor={inputId} className="absolute inset-0 cursor-pointer">
             <span className="sr-only">Upload document</span>
           </label>
-          <UploadCloud className="size-10 text-muted-foreground" aria-hidden />
+          <UploadCloud
+            className={cn(
+              "size-9 transition-colors",
+              isDraggingOver ? "text-primary" : "text-muted-foreground"
+            )}
+            aria-hidden
+          />
           <div>
             <p className="font-medium">Drag and drop your document here</p>
             <p className="text-sm text-muted-foreground">or click to browse from your device</p>

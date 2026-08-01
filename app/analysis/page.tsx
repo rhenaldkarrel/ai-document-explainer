@@ -1,14 +1,27 @@
 "use client";
 
 import Link from "next/link";
-import { FileText } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { FileText, RotateCcw } from "lucide-react";
 import { ChatPanel } from "@/components/chat-panel";
-import { buttonVariants } from "@/components/ui/button";
+import { SectionLabel } from "@/components/section-label";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { useDocumentSession } from "@/lib/document-session-context";
 import { UI_STRINGS } from "@/lib/constants";
+import { cn } from "@/lib/utils";
+
+function revealDelay(index: number): React.CSSProperties {
+  return { animationDelay: `${index * 0.08}s` };
+}
 
 export default function AnalysisPage() {
-  const { fileName, analysis } = useDocumentSession();
+  const router = useRouter();
+  const { fileName, analysis, reset } = useDocumentSession();
+
+  function handleStartOver() {
+    reset();
+    router.push("/");
+  }
 
   if (!fileName || !analysis) {
     return (
@@ -21,39 +34,58 @@ export default function AnalysisPage() {
     );
   }
 
+  // A running index across summary + key points + action items keeps the
+  // highlight-reveal cascade continuous top-to-bottom, instead of each
+  // section restarting its own stagger from zero.
+  let revealIndex = 0;
+
   return (
     <div className="mx-auto flex w-full max-w-2xl flex-col gap-8 px-4 py-16">
-      <div className="flex items-center gap-2">
-        <FileText className="size-6 text-primary" aria-hidden />
-        <h1 className="break-all text-lg font-semibold">{fileName}</h1>
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex min-w-0 items-center gap-2.5">
+          <FileText className="size-6 shrink-0 text-primary" aria-hidden />
+          <h1 className="truncate font-heading text-xl font-medium tracking-tight">{fileName}</h1>
+        </div>
+        <Button variant="outline" size="sm" className="shrink-0" onClick={handleStartOver}>
+          <RotateCcw aria-hidden />
+          Start over
+        </Button>
       </div>
 
-      <section className="space-y-2">
-        <h2 className="text-sm font-medium uppercase tracking-wide text-muted-foreground">
-          Executive Summary
-        </h2>
-        <p>{analysis.summary}</p>
+      <section className="space-y-3">
+        <SectionLabel>Summary</SectionLabel>
+        <p className={cn("highlight-reveal leading-relaxed")} style={revealDelay(revealIndex++)}>
+          {analysis.summary}
+        </p>
       </section>
 
-      <section className="space-y-2">
-        <h2 className="text-sm font-medium uppercase tracking-wide text-muted-foreground">
-          Key Points
-        </h2>
-        <ul className="list-disc space-y-1 pl-5">
+      <section className="space-y-3">
+        <SectionLabel>Key Points</SectionLabel>
+        <ul className="space-y-2 pl-5">
           {analysis.keyPoints.map((point, index) => (
-            <li key={index}>{point}</li>
+            <li
+              key={index}
+              className="highlight-reveal list-disc leading-relaxed marker:text-primary"
+              style={revealDelay(revealIndex++)}
+            >
+              {point}
+            </li>
           ))}
         </ul>
       </section>
 
-      <section className="space-y-2">
-        <h2 className="text-sm font-medium uppercase tracking-wide text-muted-foreground">
-          Action Items
-        </h2>
+      <section className="space-y-3">
+        <SectionLabel>Action Items</SectionLabel>
         {analysis.actionItems.length > 0 ? (
-          <ul className="list-disc space-y-1 pl-5">
+          <ul className="space-y-2 pl-5">
             {analysis.actionItems.map((item, index) => (
-              <li key={index}>{item}</li>
+              <li
+                key={index}
+                className="highlight-reveal list-disc leading-relaxed marker:text-primary"
+                style={revealDelay(revealIndex++)}
+              >
+                {item}
+              </li>
             ))}
           </ul>
         ) : (

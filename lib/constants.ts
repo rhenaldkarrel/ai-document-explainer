@@ -81,6 +81,13 @@ export const MODEL_TIERS: ModelTierOption[] = [
   },
 ];
 
+/** Relative-cost guidance shown next to a selected file, keyed by tier — a rough steer, not a token count. */
+export const MODEL_TIER_COST_HINTS: Record<ModelTier, string> = {
+  "flash-lite": "Lowest cost for this file — the cheapest way to analyze it.",
+  flash: "Moderate cost — roughly a few times pricier than Flash-Lite for the same file.",
+  pro: "Highest cost — can run 10-20x pricier than Flash-Lite for the same file.",
+};
+
 export const DEFAULT_MODEL_TIER: ModelTier = "flash-lite";
 
 export const DEFAULT_TEMPERATURE = 1;

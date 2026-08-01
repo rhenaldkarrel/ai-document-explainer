@@ -4,6 +4,7 @@ import { useState } from "react";
 import { AlertCircle } from "lucide-react";
 import { ChatInput } from "@/components/chat-input";
 import { ChatMessageList } from "@/components/chat-message-list";
+import { SectionLabel } from "@/components/section-label";
 import { SuggestedQuestions } from "@/components/suggested-questions";
 import { Alert, AlertTitle } from "@/components/ui/alert";
 import { useDocumentSession } from "@/lib/document-session-context";
@@ -94,10 +95,8 @@ export function ChatPanel() {
   }
 
   return (
-    <section className="space-y-4 border-t pt-8">
-      <h2 className="text-sm font-medium uppercase tracking-wide text-muted-foreground">
-        Ask a Question
-      </h2>
+    <section className="space-y-4 border-t border-border/60 pt-8">
+      <SectionLabel>Ask a Question</SectionLabel>
 
       <ChatMessageList messages={chatHistory} streamingMessage={streamingMessage} />
 
