@@ -1,36 +1,101 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# AI Document Explainer
 
-## Getting Started
+Upload a document and get an instant summary, key points, action items, and a
+chat interface to ask follow-up questions — all grounded in the document's
+own content, powered by Google Gemini.
 
-First, run the development server:
+Live at [ai-document-explainer-mu.vercel.app](https://ai-document-explainer-mu.vercel.app).
+
+## Screenshots
+
+**Upload** — drag and drop or browse for a file, with a live cost/size hint before you commit.
+
+![Upload screen](screenshots/home-dark.png)
+
+**Analysis** — the original file previews inline (native rendering for PDF/image/audio) alongside the AI-generated summary.
+
+![Analysis page with inline PDF preview](screenshots/analysis-dark.png)
+
+**Chat** — key points and action items reveal with a highlighter-style sweep; ask follow-up questions grounded only in the document's content.
+
+![Highlighted key points and a chat exchange](screenshots/chat-dark.png)
+
+**Light mode** — the same "paper and ink" palette, by daylight instead of lamplight.
+
+![Analysis page in light mode](screenshots/analysis-light.png)
+
+## Features
+
+- **Broad format support** — PDF, PNG, JPG/JPEG, audio (WAV, MP3, AAC, OGG,
+  FLAC, M4A), and Word/PowerPoint (`.docx`, `.pptx`). Audio and images are
+  understood natively by Gemini; Office documents are text-extracted
+  server-side first (Gemini doesn't read those formats natively).
+- **Structured analysis** — an executive summary, key points, action items,
+  and AI-suggested follow-up questions, produced in a single model call.
+- **Streaming chat** — ask questions about the document; answers stream in
+  token-by-token and are grounded only in the document's extracted content.
+- **Selectable model and temperature** — pick between Flash-Lite (cheapest,
+  default), Flash, and Pro tiers, and adjust generation temperature, from a
+  settings panel. A cost/size hint shows before you commit to analyzing.
+- **Inline document preview** — PDFs and images render inline, audio gets a
+  native player, and Office files get a download link (no inline preview
+  available for those formats).
+- **Session persistence** — your analysis and chat history survive a page
+  reload; a "Start over" action resets without needing to reload.
+- **Retry without re-upload** — transient failures (rate limits, empty AI
+  responses) let you retry the same upload without sending the file again.
+- **Light/dark theme** — toggle with a default of dark.
+
+## Tech stack
+
+- [Next.js 16](https://nextjs.org) (App Router, Turbopack) + React 19 + TypeScript
+- [Tailwind CSS v4](https://tailwindcss.com) with [shadcn/ui](https://ui.shadcn.com) (`base-nova` style) on [Base UI](https://base-ui.com) primitives
+- [Google Gemini API](https://ai.google.dev) via `@google/genai`
+- [Vercel Blob](https://vercel.com/docs/vercel-blob) for temporary upload storage
+- [`officeparser`](https://www.npmjs.com/package/officeparser) for `.docx`/`.pptx` text extraction
+- [`next-themes`](https://github.com/pacocoursey/next-themes) for theme switching
+- Fraunces, IBM Plex Sans, and IBM Plex Mono via `next/font/google`
+
+## Getting started
+
+### Prerequisites
+
+- [Bun](https://bun.sh)
+- A [Gemini API key](https://aistudio.google.com/apikey)
+- A [Vercel Blob](https://vercel.com/docs/vercel-blob) store (`BLOB_READ_WRITE_TOKEN`)
+
+### Setup
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
+bun install
+cp .env.example .env.local
+```
+
+Fill in `.env.local`:
+
+```bash
+GEMINI_API_KEY=       # from https://aistudio.google.com/apikey
+BLOB_READ_WRITE_TOKEN=  # from your Vercel project's Blob store settings
+```
+
+### Run the dev server
+
+```bash
 bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Scripts
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- `bun dev` — start the development server
+- `bun run build` — build for production
+- `bun start` — run the production build
+- `bun run lint` — lint the codebase
 
-## Learn More
+## Deployment
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Deployed on [Vercel](https://vercel.com). Both `GEMINI_API_KEY` and
+`BLOB_READ_WRITE_TOKEN` need to be set on the Vercel project (Production,
+Preview, and Development environments) — they aren't picked up from a local
+`.env` file at build time.
