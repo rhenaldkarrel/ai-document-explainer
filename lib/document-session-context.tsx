@@ -2,7 +2,7 @@
 
 import { createContext, useCallback, useContext, useMemo, useSyncExternalStore } from "react";
 import type { ReactNode } from "react";
-import type { ChatMessage, DocumentAnalysis } from "@/lib/types";
+import type { ChatMessage, DocumentAnalysis, SupportedMimeType } from "@/lib/types";
 
 const STORAGE_KEY = "ai-document-explainer:session:v1";
 
@@ -14,6 +14,15 @@ interface DocumentSessionState {
   chatHistory: ChatMessage[];
   /** In-progress streamed model reply, not yet in `chatHistory`. `null` = no answer streaming right now. Never persisted. */
   streamingMessage: string | null;
+  /**
+   * A `URL.createObjectURL` reference to the originally-uploaded file, for
+   * the analysis page's inline preview. Client-only and never persisted —
+   * object URLs don't survive a reload, and the original file bytes aren't
+   * kept server-side after analysis anyway (see the blob cleanup policy in
+   * app/api/analyze/route.ts).
+   */
+  previewUrl: string | null;
+  previewMimeType: SupportedMimeType | null;
 }
 
 interface SetAnalysisResultInput {
@@ -21,6 +30,8 @@ interface SetAnalysisResultInput {
   analysis: DocumentAnalysis;
   extractedText: string;
   suggestedQuestions: string[];
+  previewUrl: string;
+  previewMimeType: SupportedMimeType;
 }
 
 const initialState: DocumentSessionState = {
@@ -30,10 +41,14 @@ const initialState: DocumentSessionState = {
   suggestedQuestions: [],
   chatHistory: [],
   streamingMessage: null,
+  previewUrl: null,
+  previewMimeType: null,
 };
 
 /** Structural check only — a corrupt/foreign value falls back to `initialState` rather than crashing the app. */
-function isPersistedShape(value: unknown): value is Omit<DocumentSessionState, "streamingMessage"> {
+function isPersistedShape(
+  value: unknown
+): value is Omit<DocumentSessionState, "streamingMessage" | "previewUrl" | "previewMimeType"> {
   if (!value || typeof value !== "object") return false;
   const v = value as Record<string, unknown>;
   return (
@@ -51,7 +66,13 @@ function readStoredSession(): DocumentSessionState {
     const parsed: unknown = JSON.parse(raw);
     if (!isPersistedShape(parsed)) return initialState;
 
-    return { ...initialState, ...parsed, streamingMessage: null };
+    return {
+      ...initialState,
+      ...parsed,
+      streamingMessage: null,
+      previewUrl: null,
+      previewMimeType: null,
+    };
   } catch {
     return initialState;
   }
@@ -84,7 +105,10 @@ function subscribe(callback: () => void): () => void {
 
 function persist(state: DocumentSessionState): void {
   try {
-    const persisted: Omit<DocumentSessionState, "streamingMessage"> = {
+    const persisted: Omit<
+      DocumentSessionState,
+      "streamingMessage" | "previewUrl" | "previewMimeType"
+    > = {
       fileName: state.fileName,
       analysis: state.analysis,
       extractedText: state.extractedText,
@@ -129,6 +153,10 @@ export function DocumentSessionProvider({ children }: { children: ReactNode }) {
   const state = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 
   const setAnalysisResult = useCallback((input: SetAnalysisResultInput) => {
+    const previous = cachedState ?? readStoredSession();
+    if (previous.previewUrl) {
+      URL.revokeObjectURL(previous.previewUrl);
+    }
     setState({
       fileName: input.fileName,
       analysis: input.analysis,
@@ -136,6 +164,8 @@ export function DocumentSessionProvider({ children }: { children: ReactNode }) {
       suggestedQuestions: input.suggestedQuestions,
       chatHistory: [],
       streamingMessage: null,
+      previewUrl: input.previewUrl,
+      previewMimeType: input.previewMimeType,
     });
   }, []);
 
@@ -173,6 +203,10 @@ export function DocumentSessionProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const reset = useCallback(() => {
+    const previous = cachedState ?? readStoredSession();
+    if (previous.previewUrl) {
+      URL.revokeObjectURL(previous.previewUrl);
+    }
     try {
       window.localStorage.removeItem(STORAGE_KEY);
     } catch {

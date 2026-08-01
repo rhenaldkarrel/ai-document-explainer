@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FileText, RotateCcw } from "lucide-react";
 import { ChatPanel } from "@/components/chat-panel";
+import { DocumentPreview } from "@/components/document-preview";
 import { SectionLabel } from "@/components/section-label";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { useDocumentSession } from "@/lib/document-session-context";
@@ -16,7 +17,7 @@ function revealDelay(index: number): React.CSSProperties {
 
 export default function AnalysisPage() {
   const router = useRouter();
-  const { fileName, analysis, reset } = useDocumentSession();
+  const { fileName, analysis, previewUrl, previewMimeType, reset } = useDocumentSession();
 
   function handleStartOver() {
     reset();
@@ -60,6 +61,13 @@ export default function AnalysisPage() {
           Start over
         </Button>
       </div>
+
+      {previewUrl && previewMimeType && (
+        <section className="space-y-3">
+          <SectionLabel>Preview</SectionLabel>
+          <DocumentPreview previewUrl={previewUrl} mimeType={previewMimeType} fileName={fileName} />
+        </section>
+      )}
 
       <section className="space-y-3">
         <SectionLabel>Summary</SectionLabel>

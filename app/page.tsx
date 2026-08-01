@@ -52,7 +52,7 @@ export default function Home() {
   async function runAnalysis(
     blobUrl: string,
     currentMimeType: SupportedMimeType,
-    fileName: string,
+    file: File,
   ) {
     try {
       const data = await postJson<AnalyzeApiResponse>("/api/analyze", {
@@ -63,10 +63,12 @@ export default function Home() {
       });
 
       setAnalysisResult({
-        fileName,
+        fileName: file.name,
         analysis: data.analysis,
         extractedText: data.extractedText,
         suggestedQuestions: data.suggestedQuestions,
+        previewUrl: URL.createObjectURL(file),
+        previewMimeType: currentMimeType,
       });
       router.push("/analysis");
     } catch (err) {
@@ -97,14 +99,14 @@ export default function Home() {
       return;
     }
 
-    await runAnalysis(blobUrl, mimeType, selectedFile.name);
+    await runAnalysis(blobUrl, mimeType, selectedFile);
   }
 
   function handleRetry() {
     if (!retryBlobUrl || !mimeType || !selectedFile || isAnalyzing) return;
     setIsAnalyzing(true);
     setError(null);
-    void runAnalysis(retryBlobUrl, mimeType, selectedFile.name);
+    void runAnalysis(retryBlobUrl, mimeType, selectedFile);
   }
 
   return (
