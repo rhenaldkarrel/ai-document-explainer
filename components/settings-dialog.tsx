@@ -18,7 +18,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
-import { MAX_TEMPERATURE, MIN_TEMPERATURE, MODEL_TIERS, TEMPERATURE_STEP } from "@/lib/constants";
+import {
+  MAX_TEMPERATURE,
+  MIN_TEMPERATURE,
+  MODEL_TIERS,
+  TEMPERATURE_STEP,
+} from "@/lib/constants";
 import { useSettings } from "@/lib/settings-context";
 import type { ModelTier } from "@/lib/types";
 
@@ -30,7 +35,11 @@ export function SettingsDialog() {
     <Dialog>
       <DialogTrigger
         render={
-          <Button variant="outline" size="icon" className="rounded-full" />
+          <Button
+            variant="outline"
+            size="icon"
+            className="rounded-full cursor-pointer"
+          />
         }
       >
         <Settings aria-hidden />
@@ -41,7 +50,8 @@ export function SettingsDialog() {
         <DialogHeader>
           <DialogTitle>Settings</DialogTitle>
           <DialogDescription>
-            Choose the AI model and creativity level used for new analyses and chat messages.
+            Choose the AI model and creativity level used for new analyses and
+            chat messages.
           </DialogDescription>
         </DialogHeader>
 
@@ -53,7 +63,10 @@ export function SettingsDialog() {
             <Select
               value={tier}
               onValueChange={(value) => setTier(value as ModelTier)}
-              items={MODEL_TIERS.map((option) => ({ value: option.id, label: option.label }))}
+              items={MODEL_TIERS.map((option) => ({
+                value: option.id,
+                label: option.label,
+              }))}
             >
               <SelectTrigger id="model-tier" className="w-full">
                 <SelectValue />
@@ -67,7 +80,9 @@ export function SettingsDialog() {
               </SelectContent>
             </Select>
             {selectedTier && (
-              <p className="text-xs text-muted-foreground">{selectedTier.description}</p>
+              <p className="text-xs text-muted-foreground">
+                {selectedTier.description}
+              </p>
             )}
           </div>
 
@@ -76,7 +91,9 @@ export function SettingsDialog() {
               <label className="text-sm font-medium" htmlFor="temperature">
                 Temperature
               </label>
-              <span className="text-xs text-muted-foreground">{temperature.toFixed(1)}</span>
+              <span className="text-xs text-muted-foreground">
+                {temperature.toFixed(1)}
+              </span>
             </div>
             <Slider
               id="temperature"
@@ -96,7 +113,8 @@ export function SettingsDialog() {
               }}
             />
             <p className="text-xs text-muted-foreground">
-              Lower is more focused and consistent; higher is more creative and varied.
+              Lower is more focused and consistent; higher is more creative and
+              varied.
             </p>
           </div>
         </div>

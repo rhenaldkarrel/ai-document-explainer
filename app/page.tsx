@@ -49,7 +49,11 @@ export default function Home() {
     setRetryBlobUrl(null);
   }
 
-  async function runAnalysis(blobUrl: string, currentMimeType: SupportedMimeType, fileName: string) {
+  async function runAnalysis(
+    blobUrl: string,
+    currentMimeType: SupportedMimeType,
+    fileName: string,
+  ) {
     try {
       const data = await postJson<AnalyzeApiResponse>("/api/analyze", {
         blobUrl,
@@ -66,9 +70,12 @@ export default function Home() {
       });
       router.push("/analysis");
     } catch (err) {
-      const message = err instanceof Error ? err.message : ERROR_MESSAGES.PROCESSING_ERROR;
+      const message =
+        err instanceof Error ? err.message : ERROR_MESSAGES.PROCESSING_ERROR;
       setError(message);
-      setRetryBlobUrl(err instanceof ApiRequestError && err.retryable ? blobUrl : null);
+      setRetryBlobUrl(
+        err instanceof ApiRequestError && err.retryable ? blobUrl : null,
+      );
     } finally {
       setIsAnalyzing(false);
     }
@@ -108,11 +115,12 @@ export default function Home() {
             AI Document Explainer
           </span>
           <h1 className="font-heading text-3xl leading-tight font-medium tracking-tight text-balance sm:text-4xl">
-            Understand any document in <span className="text-primary italic">under a minute</span>
+            Understand any document in{" "}
+            <span className="text-primary italic">under a minute</span>
           </h1>
           <p className="max-w-md text-muted-foreground">
-            Upload a document and get an instant summary, key points, action items, and answers
-            to your questions.
+            Upload a document and get an instant summary, key points, action
+            items, and answers to your questions.
           </p>
         </div>
 
@@ -123,7 +131,9 @@ export default function Home() {
             onClear={handleClear}
           />
 
-          {selectedFile && !error && <CostHint fileSizeBytes={selectedFile.size} />}
+          {selectedFile && !error && (
+            <CostHint fileSizeBytes={selectedFile.size} />
+          )}
 
           {error && (
             <Alert variant="destructive">
@@ -131,7 +141,12 @@ export default function Home() {
               <AlertTitle>{error}</AlertTitle>
               {retryBlobUrl && (
                 <AlertAction>
-                  <Button variant="outline" size="sm" onClick={handleRetry} disabled={isAnalyzing}>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleRetry}
+                    disabled={isAnalyzing}
+                  >
                     <RotateCcw aria-hidden />
                     Retry
                   </Button>
@@ -141,7 +156,9 @@ export default function Home() {
           )}
 
           <div className="flex flex-wrap items-center justify-center gap-1.5">
-            <span className="text-sm text-muted-foreground">Supported files:</span>
+            <span className="text-sm text-muted-foreground">
+              Supported files:
+            </span>
             {SUPPORTED_FILE_EXTENSIONS.map((extension) => (
               <Badge key={extension} variant="outline" className="font-mono">
                 {extension.replace(".", "").toUpperCase()}
@@ -150,7 +167,7 @@ export default function Home() {
           </div>
 
           <Button
-            className="w-full"
+            className="w-full cursor-pointer"
             size="lg"
             disabled={!selectedFile || !!error || isAnalyzing}
             onClick={handleUpload}

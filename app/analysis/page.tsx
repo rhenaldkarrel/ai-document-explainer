@@ -26,7 +26,9 @@ export default function AnalysisPage() {
   if (!fileName || !analysis) {
     return (
       <div className="flex flex-1 flex-col items-center justify-center gap-4 px-4 py-16 text-center">
-        <p className="text-muted-foreground">No document is loaded in this session.</p>
+        <p className="text-muted-foreground">
+          No document is loaded in this session.
+        </p>
         <Link href="/" className={buttonVariants({ variant: "default" })}>
           Upload a document
         </Link>
@@ -44,9 +46,16 @@ export default function AnalysisPage() {
       <div className="flex items-start justify-between gap-4">
         <div className="flex min-w-0 items-center gap-2.5">
           <FileText className="size-6 shrink-0 text-primary" aria-hidden />
-          <h1 className="truncate font-heading text-xl font-medium tracking-tight">{fileName}</h1>
+          <h1 className="truncate font-heading text-xl font-medium tracking-tight">
+            {fileName}
+          </h1>
         </div>
-        <Button variant="outline" size="sm" className="shrink-0" onClick={handleStartOver}>
+        <Button
+          variant="outline"
+          size="sm"
+          className="shrink-0"
+          onClick={handleStartOver}
+        >
           <RotateCcw aria-hidden />
           Start over
         </Button>
@@ -54,7 +63,7 @@ export default function AnalysisPage() {
 
       <section className="space-y-3">
         <SectionLabel>Summary</SectionLabel>
-        <p className={cn("highlight-reveal leading-relaxed")} style={revealDelay(revealIndex++)}>
+        <p className={cn("leading-relaxed")} style={revealDelay(revealIndex++)}>
           {analysis.summary}
         </p>
       </section>

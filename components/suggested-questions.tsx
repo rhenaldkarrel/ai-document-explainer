@@ -8,7 +8,11 @@ interface SuggestedQuestionsProps {
   disabled: boolean;
 }
 
-export function SuggestedQuestions({ questions, onSelect, disabled }: SuggestedQuestionsProps) {
+export function SuggestedQuestions({
+  questions,
+  onSelect,
+  disabled,
+}: SuggestedQuestionsProps) {
   if (questions.length === 0) return null;
 
   return (
@@ -21,7 +25,7 @@ export function SuggestedQuestions({ questions, onSelect, disabled }: SuggestedQ
           size="sm"
           disabled={disabled}
           onClick={() => onSelect(question)}
-          className="h-auto whitespace-normal text-left"
+          className="h-auto whitespace-normal text-left cursor-pointer"
         >
           {question}
         </Button>

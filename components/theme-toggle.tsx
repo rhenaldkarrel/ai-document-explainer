@@ -18,7 +18,7 @@ function useMounted(): boolean {
   return useSyncExternalStore(
     subscribeNever,
     () => true,
-    () => false
+    () => false,
   );
 }
 
@@ -31,12 +31,14 @@ export function ThemeToggle() {
     <Button
       variant="outline"
       size="icon"
-      className="rounded-full"
+      className="rounded-full cursor-pointer"
       onClick={() => setTheme(isDark ? "light" : "dark")}
       disabled={!mounted}
     >
       {isDark ? <Moon aria-hidden /> : <Sun aria-hidden />}
-      <span className="sr-only">Switch to {isDark ? "light" : "dark"} mode</span>
+      <span className="sr-only">
+        Switch to {isDark ? "light" : "dark"} mode
+      </span>
     </Button>
   );
 }

@@ -31,7 +31,12 @@ export function ChatInput({ onSend, disabled }: ChatInputProps) {
         placeholder="Ask a question about this document..."
         disabled={disabled}
       />
-      <Button type="submit" size="icon" disabled={disabled || !value.trim()}>
+      <Button
+        type="submit"
+        size="icon"
+        disabled={disabled || !value.trim()}
+        className="cursor-pointer"
+      >
         <Send aria-hidden />
         <span className="sr-only">Send</span>
       </Button>
