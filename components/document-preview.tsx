@@ -14,17 +14,26 @@ export function DocumentPreview({ previewUrl, mimeType, fileName }: DocumentPrev
       <iframe
         src={previewUrl}
         title={`Preview of ${fileName}`}
-        className="h-[28rem] w-full rounded-lg border border-border bg-card"
+        className="h-112 w-full rounded-lg border border-border bg-card"
       />
     );
   }
 
   if (mimeType.startsWith("image/")) {
     return (
-      <div className="flex max-h-[28rem] items-center justify-center overflow-hidden rounded-lg border border-border bg-card p-2">
+      // A *fixed* height (not max-height) reserves this section's space on
+      // the very first render, before the browser knows the image's
+      // intrinsic dimensions — otherwise the container grows once the image
+      // finishes loading, shifting everything below it (including the
+      // suggested-question buttons) out from under an in-flight click.
+      <div className="flex h-112 items-center justify-center overflow-hidden rounded-lg border border-border bg-card p-2">
         {/* next/image can't optimize a blob: URL (it's only valid in this browser tab) — a plain img is the correct tag here, not a shortcut. */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={previewUrl} alt={fileName} className="max-h-[26rem] w-auto object-contain" />
+        <img
+          src={previewUrl}
+          alt={fileName}
+          className="max-h-full max-w-full object-contain"
+        />
       </div>
     );
   }
